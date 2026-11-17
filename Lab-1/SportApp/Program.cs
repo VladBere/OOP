@@ -255,6 +255,17 @@ bool ReadIsProfessional()
     }
 }
 
+int ReadInt(string prompt, int min, int max)
+{
+    while (true)
+    {
+        Console.Write($"{prompt} ({min}..{max}) ---> ");
+        if (int.TryParse(Console.ReadLine(), out int value) && value >= min && value <= max)
+            return value;
+        Console.WriteLine($"Error: enter an integer from {min} to {max}.");
+    }
+}
+
 // ======================= 2. SHOW =======================
 
 void ShowAll()
@@ -346,7 +357,77 @@ void FindAthlete()
 
 void DemonstrateBehavior()
 {
-    Console.WriteLine("Not implemented yet.");
+    if (count == 0)
+    {
+        Console.WriteLine("The register is empty. Add an athlete first.");
+        return;
+    }
+    ShowAll();
+    int number = ReadInt("Enter athlete number", 1, count);
+    Athlete a = athletes[number - 1];
+
+    bool back = false;
+    while (!back)
+    {
+        Console.WriteLine();
+        Console.WriteLine($"--- Behavior of {a.name} (energy {a.GetEnergy()}, hours {a.GetTrainingHours()}, medals {a.medals}) ---");
+        Console.WriteLine("1 - Train(hours)");
+        Console.WriteLine("2 - Rest(hours)");
+        Console.WriteLine("3 - CanCompete()");
+        Console.WriteLine("4 - Compete(opponentRating)");
+        Console.WriteLine("5 - GetRating()");
+        Console.WriteLine("6 - GetAge()");
+        Console.WriteLine("7 - GetEnergy() / GetTrainingHours()");
+        Console.WriteLine("0 - Back to main menu");
+        Console.Write("Your choice ---> ");
+        string choice = Console.ReadLine()?.Trim();
+        switch (choice)
+        {
+            case "1":
+                int hours = ReadInt("Training hours", 1, 10);
+                if (a.Train(hours))
+                    Console.WriteLine($"Training is done. Energy = {a.GetEnergy()}, total hours = {a.GetTrainingHours()}.");
+                else
+                    Console.WriteLine($"Not enough energy for {hours} h of training (energy = {a.GetEnergy()}). Have a rest!");
+                break;
+            case "2":
+                int restHours = ReadInt("Rest hours", 1, 24);
+                a.Rest(restHours);
+                Console.WriteLine($"Athlete has rested. Energy = {a.GetEnergy()}.");
+                break;
+            case "3":
+                Console.WriteLine(a.CanCompete() ? "Athlete is ready to compete." : "Athlete is too tired to compete.");
+                break;
+            case "4":
+                if (!a.CanCompete())
+                {
+                    Console.WriteLine("Athlete is too tired to compete (energy < 30).");
+                    break;
+                }
+                int opponent = ReadInt("Opponent rating", 0, 1000);
+                int rating = a.GetRating();
+                bool win = a.Compete(opponent);
+                Console.WriteLine(win
+                    ? $"VICTORY! Rating {rating} > {opponent}. Medals = {a.medals}."
+                    : $"Defeat. Rating {rating} <= {opponent}. Medals = {a.medals}.");
+                break;
+            case "5":
+                Console.WriteLine($"Rating = {a.GetRating()}");
+                break;
+            case "6":
+                Console.WriteLine($"Age = {a.GetAge()}");
+                break;
+            case "7":
+                Console.WriteLine($"Energy = {a.GetEnergy()}, training hours = {a.GetTrainingHours()}");
+                break;
+            case "0":
+                back = true;
+                break;
+            default:
+                Console.WriteLine("Unknown item.");
+                break;
+        }
+    }
 }
 
 // ======================= 5. DELETE =======================
