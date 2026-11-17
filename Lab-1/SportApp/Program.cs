@@ -434,6 +434,56 @@ void DemonstrateBehavior()
 
 void DeleteAthlete()
 {
-    Console.WriteLine("Not implemented yet.");
+    if (count == 0)
+    {
+        Console.WriteLine("The register is empty. Nothing to delete.");
+        return;
+    }
+    Console.WriteLine("Delete by:");
+    Console.WriteLine("1 - Number in the table");
+    Console.WriteLine("2 - Sport (all athletes of this sport)");
+    Console.Write("Your choice ---> ");
+    string choice = Console.ReadLine()?.Trim();
+
+    if (choice == "1")
+    {
+        ShowAll();
+        Console.Write($"Enter number (1..{count}) ---> ");
+        if (!int.TryParse(Console.ReadLine(), out int number) || number < 1 || number > count)
+        {
+            Console.WriteLine($"No athlete with such number found.");
+            return;
+        }
+        string name = athletes[number - 1].name;
+        RemoveAt(number - 1);
+        Console.WriteLine($"Athlete #{number} ({name}) is deleted.");
+    }
+    else if (choice == "2")
+    {
+        SportType sport = ReadSport();
+        int removed = 0;
+        for (int i = count - 1; i >= 0; i--)
+        {
+            if (athletes[i].sport == sport)
+            {
+                RemoveAt(i);
+                removed++;
+            }
+        }
+        Console.WriteLine(removed == 0
+            ? $"No athletes of sport {sport} found."
+            : $"Deleted athletes: {removed}.");
+    }
+    else
+    {
+        Console.WriteLine("Unknown delete type.");
+    }
 }
 
+void RemoveAt(int index)
+{
+    for (int i = index; i < count - 1; i++)
+        athletes[i] = athletes[i + 1];
+    athletes[count - 1] = null;
+    count--;
+}
