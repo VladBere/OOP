@@ -288,7 +288,58 @@ void PrintTable(Athlete[] list, int[] numbers)
 
 void FindAthlete()
 {
-    Console.WriteLine("Not implemented yet.");
+    if (count == 0)
+    {
+        Console.WriteLine("The register is empty. Nothing to search.");
+        return;
+    }
+    Console.WriteLine("Search by:");
+    Console.WriteLine("1 - Name");
+    Console.WriteLine("2 - Sport");
+    Console.Write("Your choice ---> ");
+    string choice = Console.ReadLine()?.Trim();
+
+    List<Athlete> found = new List<Athlete>();
+    List<int> numbers = new List<int>();
+
+    if (choice == "1")
+    {
+        Console.Write("Enter name (or part of name) ---> ");
+        string text = Console.ReadLine()?.Trim() ?? "";
+        for (int i = 0; i < count; i++)
+        {
+            if (text.Length > 0 && athletes[i].name.Contains(text, StringComparison.OrdinalIgnoreCase))
+            {
+                found.Add(athletes[i]);
+                numbers.Add(i + 1);
+            }
+        }
+    }
+    else if (choice == "2")
+    {
+        SportType sport = ReadSport();
+        for (int i = 0; i < count; i++)
+        {
+            if (athletes[i].sport == sport)
+            {
+                found.Add(athletes[i]);
+                numbers.Add(i + 1);
+            }
+        }
+    }
+    else
+    {
+        Console.WriteLine("Unknown search type.");
+        return;
+    }
+
+    if (found.Count == 0)
+    {
+        Console.WriteLine("No athletes found.");
+        return;
+    }
+    Console.WriteLine($"Found athletes: {found.Count}");
+    PrintTable(found.ToArray(), numbers.ToArray());
 }
 
 // ======================= 4. BEHAVIOR =======================
