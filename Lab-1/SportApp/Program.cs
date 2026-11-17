@@ -1,2 +1,307 @@
-// Lab-1. Classes and objects
-Console.WriteLine("SPORT CLUB: athletes register");
+using System.Globalization;
+using System.Text.RegularExpressions;
+using SportApp;
+
+// ================== Lab-1. Класи, об'єкти ==================
+// Предметна область: спорт. Клас Athlete (спортсмен).
+// Усі перевірки обмежень виконуються в основній програмі (Program.cs).
+
+const int MinNameLength = 2;
+const int MaxNameLength = 20;
+const double MinWeight = 30.0;
+const double MaxWeight = 200.0;
+const int MaxMedals = 500;
+DateTime minBirthDate = new DateTime(1950, 1, 1);
+
+Random random = new Random();
+
+Console.WriteLine("=== SPORT CLUB: athletes register (Lab-1) ===");
+int capacity = ReadCapacity();
+Athlete[] athletes = new Athlete[capacity];
+int count = 0;
+
+bool exit = false;
+while (!exit)
+{
+    PrintMenu();
+    string choice = Console.ReadLine()?.Trim();
+    Console.WriteLine();
+    switch (choice)
+    {
+        case "1": AddAthlete(); break;
+        case "2": ShowAll(); break;
+        case "3": FindAthlete(); break;
+        case "4": DemonstrateBehavior(); break;
+        case "5": DeleteAthlete(); break;
+        case "0":
+            exit = true;
+            Console.WriteLine("Goodbye!");
+            break;
+        default:
+            Console.WriteLine("Unknown menu item. Try again.");
+            break;
+    }
+}
+
+// ======================= MENU =======================
+
+void PrintMenu()
+{
+    Console.WriteLine();
+    Console.WriteLine("---------------- MENU ----------------");
+    Console.WriteLine("1 - Add athlete");
+    Console.WriteLine("2 - Show all athletes");
+    Console.WriteLine("3 - Find athlete");
+    Console.WriteLine("4 - Demonstrate behavior");
+    Console.WriteLine("5 - Delete athlete");
+    Console.WriteLine("0 - Exit");
+    Console.Write("Your choice ---> ");
+}
+
+int ReadCapacity()
+{
+    while (true)
+    {
+        Console.Write("Enter max number of athletes N (1..100) ---> ");
+        string input = Console.ReadLine();
+        if (int.TryParse(input, out int n) && n > 0 && n <= 100)
+            return n;
+        Console.WriteLine("Error: N must be an integer from 1 to 100.");
+    }
+}
+
+// ======================= 1. ADD =======================
+
+void AddAthlete()
+{
+    if (count >= capacity)
+    {
+        Console.WriteLine($"Error: the register is full ({capacity} of {capacity}). Delete an athlete first.");
+        return;
+    }
+
+    Console.WriteLine("1 - Manual input");
+    Console.WriteLine("2 - Automatic (random) input");
+    Console.Write("Choose mode ---> ");
+    string mode = Console.ReadLine()?.Trim();
+
+    Athlete athlete;
+    if (mode == "1") athlete = CreateManually();
+    else if (mode == "2") athlete = CreateRandomly();
+    else
+    {
+        Console.WriteLine("Unknown mode. Athlete is not added.");
+        return;
+    }
+
+    athletes[count] = athlete;
+    count++;
+    Console.WriteLine($"Athlete {athlete.name} is added ({count} of {capacity}).");
+}
+
+Athlete CreateManually()
+{
+    Athlete athlete = new Athlete();
+    athlete.name = ReadName("Enter name");
+    athlete.birthDate = ReadBirthDate();
+    athlete.sport = ReadSport();
+    athlete.weight = ReadWeight();
+    athlete.medals = ReadMedals();
+    athlete.isProfessional = ReadIsProfessional();
+    return athlete;
+}
+
+Athlete CreateRandomly()
+{
+    (string Name, SportType Sport)[] samples =
+    {
+        ("Andriy Shevchenko", SportType.Football), ("Mykhailo Mudryk", SportType.Football),
+        ("Artem Pustovyi", SportType.Basketball), ("Alex Len", SportType.Basketball),
+        ("Marta Kostyuk", SportType.Tennis), ("Dayana Yastremska", SportType.Tennis),
+        ("Mykhailo Romanchuk", SportType.Swimming), ("Vasyl Lomachenko", SportType.Boxing),
+        ("Yaroslava Mahuchikh", SportType.Athletics), ("Bohdan Bondarenko", SportType.Athletics)
+    };
+    var sample = samples[random.Next(samples.Length)];
+    Athlete athlete = new Athlete();
+    athlete.name = sample.Name;
+    athlete.birthDate = new DateTime(random.Next(1975, 2010), random.Next(1, 13), random.Next(1, 29));
+    athlete.sport = sample.Sport;
+    athlete.weight = Math.Round(50 + random.NextDouble() * 60, 1);
+    athlete.medals = random.Next(0, 31);
+    athlete.isProfessional = random.Next(2) == 1;
+    Console.WriteLine("Athlete is generated automatically.");
+    return athlete;
+}
+
+// ---------- введення з перевіркою обмежень ----------
+
+// Ім'я: 2..20 символів, тільки латинські літери, пробіл або дефіс між словами
+string ReadName(string prompt)
+{
+    while (true)
+    {
+        Console.Write($"{prompt} ({MinNameLength}-{MaxNameLength} Latin letters) ---> ");
+        string value = Console.ReadLine()?.Trim() ?? "";
+        if (value.Length < MinNameLength || value.Length > MaxNameLength)
+        {
+            Console.WriteLine($"Error: name length must be from {MinNameLength} to {MaxNameLength} characters.");
+            continue;
+        }
+        if (!Regex.IsMatch(value, @"^[A-Za-z]+([ \-][A-Za-z]+)*$"))
+        {
+            Console.WriteLine("Error: name can contain only Latin letters (words separated by space or '-').");
+            continue;
+        }
+        return value;
+    }
+}
+
+// Дата народження: формат dd.MM.yyyy, не раніше 01.01.1950, вік не менше 10 років
+DateTime ReadBirthDate()
+{
+    DateTime maxBirthDate = DateTime.Today.AddYears(-10);
+    while (true)
+    {
+        Console.Write("Enter birth date (dd.MM.yyyy) ---> ");
+        string value = Console.ReadLine()?.Trim();
+        if (!DateTime.TryParseExact(value, "dd.MM.yyyy", CultureInfo.InvariantCulture,
+                                    DateTimeStyles.None, out DateTime date))
+        {
+            Console.WriteLine("Error: date must be in format dd.MM.yyyy.");
+            continue;
+        }
+        if (date < minBirthDate || date > maxBirthDate)
+        {
+            Console.WriteLine($"Error: date must be from {minBirthDate:dd.MM.yyyy} to {maxBirthDate:dd.MM.yyyy} (age 10+).");
+            continue;
+        }
+        return date;
+    }
+}
+
+// Вид спорту: тільки значення з переліку SportType
+SportType ReadSport()
+{
+    SportType[] values = Enum.GetValues<SportType>();
+    while (true)
+    {
+        Console.WriteLine("Sports: " + string.Join(", ", values.Select((s, i) => $"{i + 1}-{s}")));
+        Console.Write("Enter sport (number or name) ---> ");
+        string value = Console.ReadLine()?.Trim();
+        if (int.TryParse(value, out int number))
+        {
+            if (number >= 1 && number <= values.Length) return values[number - 1];
+        }
+        else if (Enum.TryParse(value, true, out SportType sport) && Enum.IsDefined(sport))
+        {
+            return sport;
+        }
+        Console.WriteLine("Error: there is no such sport in the list.");
+    }
+}
+
+// Вага: дійсне число від 30 до 200 кг
+double ReadWeight()
+{
+    while (true)
+    {
+        Console.Write($"Enter weight, kg ({MinWeight}..{MaxWeight}) ---> ");
+        string value = Console.ReadLine()?.Trim().Replace(',', '.');
+        if (!double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double weight))
+        {
+            Console.WriteLine("Error: weight must be a number.");
+            continue;
+        }
+        if (weight < MinWeight || weight > MaxWeight)
+        {
+            Console.WriteLine($"Error: weight must be from {MinWeight} to {MaxWeight} kg.");
+            continue;
+        }
+        return Math.Round(weight, 1);
+    }
+}
+
+// Медалі: ціле число від 0 до 500
+int ReadMedals()
+{
+    while (true)
+    {
+        Console.Write($"Enter number of medals (0..{MaxMedals}) ---> ");
+        string value = Console.ReadLine()?.Trim();
+        if (!int.TryParse(value, out int medals))
+        {
+            Console.WriteLine("Error: number of medals must be an integer.");
+            continue;
+        }
+        if (medals < 0 || medals > MaxMedals)
+        {
+            Console.WriteLine($"Error: number of medals must be from 0 to {MaxMedals}.");
+            continue;
+        }
+        return medals;
+    }
+}
+
+// Професіонал: y / n
+bool ReadIsProfessional()
+{
+    while (true)
+    {
+        Console.Write("Is professional? (y/n) ---> ");
+        string value = Console.ReadLine()?.Trim().ToLower();
+        if (value == "y" || value == "yes") return true;
+        if (value == "n" || value == "no") return false;
+        Console.WriteLine("Error: enter 'y' or 'n'.");
+    }
+}
+
+// ======================= 2. SHOW =======================
+
+void ShowAll()
+{
+    if (count == 0)
+    {
+        Console.WriteLine("The register is empty. There are no athletes to show.");
+        return;
+    }
+    Console.WriteLine($"All athletes ({count} of {capacity}):");
+    PrintTable(athletes.Take(count).ToArray(), Enumerable.Range(1, count).ToArray());
+}
+
+void PrintTable(Athlete[] list, int[] numbers)
+{
+    string line = new string('-', 104);
+    Console.WriteLine(line);
+    Console.WriteLine($"| {"#",2} | {"Name",-20} | {"Birth date",-10} | {"Age",3} | {"Sport",-10} | {"Weight",6} | {"Medals",6} | {"Pro",3} | {"Energy",6} | {"Hours",5} |");
+    Console.WriteLine(line);
+    for (int i = 0; i < list.Length; i++)
+    {
+        Athlete a = list[i];
+        Console.WriteLine($"| {numbers[i],2} | {a.name,-20} | {a.birthDate,-10:dd.MM.yyyy} | {a.GetAge(),3} | {a.sport,-10} | " +
+                          $"{a.weight.ToString("F1", CultureInfo.InvariantCulture),6} | {a.medals,6} | {(a.isProfessional ? "yes" : "no"),3} | " +
+                          $"{a.GetEnergy(),6} | {a.GetTrainingHours(),5} |");
+    }
+    Console.WriteLine(line);
+}
+
+// ======================= 3. FIND =======================
+
+void FindAthlete()
+{
+    Console.WriteLine("Not implemented yet.");
+}
+
+// ======================= 4. BEHAVIOR =======================
+
+void DemonstrateBehavior()
+{
+    Console.WriteLine("Not implemented yet.");
+}
+
+// ======================= 5. DELETE =======================
+
+void DeleteAthlete()
+{
+    Console.WriteLine("Not implemented yet.");
+}
+
